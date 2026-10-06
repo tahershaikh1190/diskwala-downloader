@@ -2,13 +2,13 @@
 
 ## Outcome: BLOCKED
 
-The standalone Windows command has been built and installed, but the sample DiskWala share does **not** resolve to a public media URL. The public website shows metadata and instructs viewers to use the app. Its first-party metadata endpoint rejects a plain request with HTTP 400 `Missing Appicrypt header`. The official Windows app's packaged web code references `/desktop/np_lelo` and processes its returned file information as encrypted data, including the media URL. The desktop route gives 404 in an ordinary browser. This is an app access boundary, not an expired test share or a broken direct downloader. No app cryptogram or encrypted response handling was copied or bypassed.
+The standalone Windows command has been built and installed, but the sample DiskWala share does **not** resolve to a public media URL. The public website shows metadata and instructs viewers to use the app. Its first-party metadata endpoint rejects a plain request with HTTP 400 `Missing Appicrypt header`. The official Windows beta accepts a user-facing deep link and has an interactive download feature, but provides no documented unattended download command or selectable destination. No independently verified, authorized third-party resolver was found. No app cryptogram or encrypted response handling was copied or bypassed.
 
 ## Project
 
 - GitHub: https://github.com/tahershaikh1190/diskwala-downloader
 - Local: `E:\TeraBoxDownload\Tools\DiskwalaDownloader`
-- Tested code commit: `386e94bb4d0864d953156e2a67815fba8a74191e` (report added afterward)
+- Tested code commit before this research update: `5742b6b7ae9312fe46713ac16c789c1b74a2c3a1`
 - Python: 3.13.2 in `venv`
 - FFmpeg: 9.0.1 already on PATH
 - Output folder: `E:\TeraBoxDownload\Diskwala`
@@ -76,3 +76,41 @@ For safe diagnostics:
 ```
 
 Current expected result: `ACCESS_RESTRICTED`; no video is downloaded. A future public share that exposes an authorized MP4 or HLS URL may be supported automatically, but this has not yet been verified against a real DiskWala media URL.
+
+## Supported-resolver research — 2026-10-06
+
+### AppiCrypt identification and boundary
+
+The observed `Appicrypt` header, `Missing Appicrypt header` API response, and official web asset named `appicrypt-web-f-0_1_216.js` are a strong match for **Talsec AppiCryptWeb**. Talsec's own [AppiCryptWeb documentation](https://docs.talsec.app/premium-products/product/appicryptweb) describes a WebAssembly agent that places a signed cryptogram in an `appicrypt` header, including Electron support. Its separate [mobile AppiCrypt documentation](https://docs.talsec.app/premium-products/product/appicrypt) describes app and OS integrity attestation. However, DiskWala's public site and package did not identify Talsec as the vendor, so attribution is **probable, not conclusively confirmed**. The web asset is more specifically consistent with AppiCryptWeb than a mobile SDK. In either case, the header is an intentional API-access-control boundary. No attempt was made to generate, reproduce, replay, spoof, or bypass it.
+
+### Official first-party route
+
+The current [official site and FAQ](https://www.diskwala.com/) describe creator uploads through the dashboard or Telegram bots and consumer viewing/downloading through the DiskWala app. The FAQ says links open in the app. Searches of the public site and current indexed developer results found no official developer, public-share, documented download, or partner resolver API. The supplied share still returns an HTTP 200 HTML shell on 2026-10-06; that alone does not prove the underlying video remains available. The CLI's current plain metadata request still reports `ACCESS_RESTRICTED` with no direct URL. We did not attempt to use the web cryptogram or any protected desktop endpoint.
+
+Static inspection of the **official beta installer linked on the official site**, without executing the unsigned installer, found a user-facing `diskwala://` protocol handler. It maps `diskwala://app/<ID>` to the app's file information page, accepts protocol URLs on initial launch and through a second-instance handoff, and exposes an interactive download action. That action uses Electron's `app.getPath("downloads")`, i.e. the Windows Downloads folder. No public documentation or static evidence showed a command-line switch for unattended download, an output directory parameter, a media URL export, or a custom destination setting. Merely opening a share in the official app is possible in principle, but cannot fulfill `diskwala "<share>"` downloading automatically into `E:\TeraBoxDownload\Diskwala`. The beta was not installed or run, so actual end-to-end app behavior remains unverified.
+
+### Third-party candidates and public tests
+
+These are **provider claims**, not evidence of authorization from DiskWala. None discloses a verifiable licensed/partner relationship or how it obtains media links. No third-party provider was added to the CLI because its legitimacy and end-to-end result could not be established with free/public access.
+
+| Provider | Public documentation and claimed schema | Auth, free access, price and limits | Public test and assessment |
+| --- | --- | --- | --- |
+| [AK REVOLUTION Diskwala API](https://diskwaladevapi.in/) | Advertises `POST /api/v1/diskwala/extract`, `X-API-Key`, JSON `{ "url": "https://diskwala.com/..." }`, direct download and stream URLs, playlists/folders. [Detailed docs and playground](https://diskwaladevapi.in/api.php) redirect to login. Exact response fields are not public. No source code found. | Free signup advertises a key, but [pricing](https://diskwaladevapi.in/) and FAQ require a credit purchase for requests. Smallest pack ₹19 for 100 successes; 60/min on that plan. Larger packs: ₹149/1,000, ₹599/10,000, ₹999/25,000, ₹1,799/50,000, ₹3,599/100,000, ₹7,499/500,000. Marketing elsewhere says 300/min, while the FAQ says 60/min on the primary API; treat per-plan figures as unverified. | Playground/integration page required login; no public extraction or free request allowance was demonstrated. Terms offer the API “as is” and no uptime guarantee. Licensing/authorization from DiskWala and reliability are unverified. |
+| [AR Digital Services / teraboxapi.com](https://teraboxapi.com/diskwala-api) | Advertises `POST https://api.teraboxdl.site/api/v1/diskwala/extract`, Bearer key, JSON URL input, direct CDN URL, HLS/m3u8, playlists and metadata. A page labels a response “LIVE,” but it visibly uses a sample file/CDN URL, so it is not evidence of a live extraction. [General docs](https://teraboxapi.com/docs) mainly describe a separate TeraBox API. No resolver source code found. | No free extraction advertised. ₹29/100 credits, ₹1,899/50,000, ₹3,699/100,000, ₹9,999/1,000,000; claimed 60–300/min depending on plan. Payment required for key. | “Live Sandbox Demo” points back to the sales page; no working public extraction was verified. Provider relationship to DiskWala, SLA, and link reliability remain unverified. |
+| [apipanel.in / litedns](https://apipanel.in/) | Public page documents Bearer `token_id.secret` and `GET https://diskwala.litedns.xyz/?url=<share>`. Example response has `file_id`, `file_name`, `size`, `sizebytes`, `direct_link`, `m3u8_url`, and `stream_url`; also lists `/fast-download`, `/stream`, `/health`. It also names `api.diskwala.in` as base URL, which did not resolve in our DNS test. No source code found. | Page says “Start Free Trial” but lists ₱30/month for 100 requests, ₱1,999.99/month for 50,000, ₱3,999.99/month for 100,000, and ₱10,999.99/month for 1,000,000; token requires signup/subscription. No clear free extraction allowance or per-minute limit. | `https://diskwala.litedns.xyz/health` returned 200 and `{"status":"healthy"}`; anonymous resolver request with the supplied share returned 401. Health proves only that an endpoint answered. Claims of 99.999% uptime, 0 ms latency, and SOC2 are unverified; the page itself has inconsistent figures and domains. DiskWala authorization unknown. |
+| [rishi058/TeraBox-Video-Downloader](https://github.com/rishi058/TeraBox-Video-Downloader) | Public code uses a private scraper proxy contract (`DISKWALA_PROXY_URL`, `DISKWALA_API_KEY`, `fileInfo.url/name/size`). | No public endpoint, key, free tier, pricing, or provider source. | Not an independently testable or documented public resolver. The private proxy's method of access and permission are unknown. |
+
+Other indexed GitHub results did not provide a documented unauthenticated/public DiskWala resolver. Projects centered on patched apps or integrity suppression were excluded from consideration.
+
+For the two INR credit services, **one successful extraction per video** would make the cheapest advertised 100-video pack ₹19 (AK REVOLUTION) or ₹29 (AR Digital). This excludes any retries, download traffic, taxes, or payment fees. apipanel's smallest advertised plan would be ₱30 for up to 100 monthly requests. These are *advertised* costs, not approved purchases or verified services. Both INR vendors claim MP4/direct links; AR Digital explicitly claims HLS too. apipanel's example includes both direct and HLS fields. No real response was obtained from any of them.
+
+### Decision and recommendation
+
+**BLOCKED** remains the defensible result: the first-party public resolver is access controlled, and no independently verifiable authorized resolver produced a real media URL through free/public access. The paid services are candidates for further due diligence, not yet supported solutions. Do not purchase a plan or install a provider adapter on marketing claims alone. The next legitimate steps are to ask DiskWala for a documented public/partner API or written confirmation that a named third-party provider is authorized, or use the official app interactively. If the user supplies an authorized API key and a verifiable provider contract later, add a `ResolverProvider` adapter with configuration in an environment variable/config file, tests for auth/errors/schema, and no committed credentials. The existing downloader needs no change until then.
+
+### Phase verification
+
+- Existing 10 unit tests: pass on 2026-10-06.
+- Supplied share: HTTP 200 official HTML shell; CLI diagnostic: `ACCESS_RESTRICTED`, no direct URL.
+- Public litedns health: HTTP 200; unauthenticated resolver: HTTP 401.
+- No registration, paid call, purchase, official-app execution, or real DiskWala video download occurred.
