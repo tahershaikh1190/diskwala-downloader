@@ -57,6 +57,8 @@ The diagnostic prints the share ID, status, and whether a public direct URL was 
 
 The resolver validates the official share URL, loads its public HTML, and examines standard media elements and metadata. If none is present, it probes the official `/api/v1/file/temp_info` endpoint without private headers or a session to classify the limit. The current server returns `400 Missing Appicrypt header`; the React page itself says to open the file in the DiskWala app. No public media URL is returned. The program stops at `ACCESS_RESTRICTED` instead of inventing a URL or using an unofficial paid resolver.
 
+The official Windows beta's packaged web app references a separate `/desktop/np_lelo` endpoint. Its response is processed as encrypted file metadata and media URL inside the app. The desktop web route returns 404 in an ordinary browser. We inspected the package statically and did not run its unsigned installer or copy its code. Reproducing the app's integrity/decryption mechanism is outside this tool's public-share scope.
+
 If DiskWala later exposes public media in the web page, direct URLs go to the resumable HTTP downloader and `.m3u8` URLs go to `yt-dlp`/FFmpeg. The public metadata response parser also recognizes `fileInfo.name`, `fileInfo.size`, `fileInfo.type`, and `fileInfo.url`, but that response is not currently accessible to a plain HTTP client.
 
 Rishi's reference bot uses an external, unavailable proxy contract: `POST <DISKWALA_PROXY_URL>` with JSON `{"url":"share URL"}` and `x-api-key`. Its response uses `fileInfo.url`, `fileInfo.name`, and `fileInfo.size`. This project does not call that proxy or contain its source.

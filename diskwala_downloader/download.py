@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import re
+import sys
 import time
 from urllib.parse import urlsplit
 
@@ -71,16 +72,29 @@ def download_direct(info: MediaInfo, folder: Path = OUTPUT_DIR, session: request
                         raise requests.HTTPError(f"HTTP {r.status_code}")
                     if r.status_code not in {200, 206}:
                         raise DiskwalaError("DOWNLOAD_FAILED", f"Media server returned HTTP {r.status_code}")
+                    content_type = r.headers.get("Content-Type", "").lower()
+                    if "text/html" in content_type or "application/json" in content_type:
+                        raise DiskwalaError("DOWNLOAD_FAILED", "Media URL returned a web page instead of a file")
                     mode = "ab" if start and r.status_code == 206 else "wb"
                     if mode == "ab":
                         content_range = r.headers.get("Content-Range", "")
                         if not content_range.startswith(f"bytes {start}-"):
                             raise DiskwalaError("DOWNLOAD_FAILED", "Invalid resume range from media server")
                     expected = info.filesize
+                    begun = time.monotonic()
+                    last_update = begun
                     with part.open(mode) as f:
                         for chunk in r.iter_content(chunk_size=1024 * 1024):
                             if chunk:
                                 f.write(chunk)
+                                if sys.stdout.isatty() and time.monotonic() - last_update >= 0.5:
+                                    done = f.tell()
+                                    speed = (done - (start if mode == "ab" else 0)) / max(time.monotonic() - begun, 0.001)
+                                    percent = f"{done / expected * 100:5.1f}% " if expected else ""
+                                    print(f"\rDownloading: {percent}{done / 1048576:.1f} MiB  {speed / 1048576:.1f} MiB/s", end="", flush=True)
+                                    last_update = time.monotonic()
+                    if sys.stdout.isatty():
+                        print()
                     if expected and part.stat().st_size != expected:
                         raise requests.ConnectionError("Incomplete download")
                     os.replace(part, target)
