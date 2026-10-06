@@ -14,7 +14,7 @@ The standalone Windows command has been built and installed, but the sample Disk
 - Output folder: `E:\TeraBoxDownload\Diskwala`
 - Command: `diskwala "https://www.diskwala.com/app/<24-hex-ID>"`; launcher added to user PATH. A newly opened terminal may be needed to see the updated PATH.
 - Dependencies: requests 2.34.2, yt-dlp 2026.8.19, and transitive dependencies installed via editable `pyproject.toml` install.
-- GitHub: authenticated as `tahershaikh1190`; public repository created; code commits pushed. Final report commit/push status should be checked with `git status` and `git ls-remote origin main`.
+- GitHub: authenticated as `tahershaikh1190`; public repository created and pushed. The final commit and remote sync were verified after the report update.
 
 ## Resolver and endpoint evidence
 
@@ -40,7 +40,7 @@ These observations establish the current blocker for this sample and public work
 - Ten automated tests pass: URL recognition, public HTML direct/HLS selection, metadata parsing, expiry, filename/path safety, HTTP error classification, official-page probe, downloader selection, Range resume, and retry.
 - Python `compileall` passes.
 - A local HTTP server served a generated 13,475-byte MP4 to the direct downloader. The downloaded file completed and FFprobe confirmed 1.0-second playable duration. This verifies the **download pipeline**, not DiskWala resolution.
-- Real `diskwala` and `python -m diskwala_downloader.inspect` against the user-provided share return `ACCESS_RESTRICTED` and download no file.
+- Real `diskwala` and `python -m diskwala_downloader.inspect` against the user-provided share return `ACCESS_RESTRICTED` and download no file. The final launcher invocation exited with code 2 and created zero new files in the output folder.
 - Real `yt-dlp --skip-download --dump-single-json <share>` returns `Unsupported URL`.
 - No large video was downloaded during testing.
 
