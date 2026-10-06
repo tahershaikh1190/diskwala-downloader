@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "diskwala-downloader"
+version = "0.1.0"
+description = "Windows CLI for publicly downloadable DiskWala media"
+requires-python = ">=3.11"
+dependencies = ["requests>=2.32,<3", "yt-dlp>=2026.1,<2027"]
+
+[project.scripts]
+diskwala = "diskwala_downloader.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["diskwala_downloader*"]
